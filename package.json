@@ -29,6 +29,7 @@
     "express": "^4.17.1",
     "mongoose": "^5.10.2",
     "node-geocoder": "^3.27.0",
+    "ramda": "^0.27.1",
     "slugify": "^1.4.5"
   }
 }

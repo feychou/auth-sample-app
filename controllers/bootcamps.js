@@ -1,3 +1,4 @@
+const { omit } = require('ramda');
 const ErrorResponse = require('../utils/errorResponse');
 const Bootcamp = require("../models/Bootcamp");
 const asyncHandler = require('../middleware/async');
@@ -7,11 +8,46 @@ const geocoder = require('../utils/geocoder');
 // @route   GET /api/v1/bootcamps
 // @access  Public
 exports.getBootcamps = asyncHandler(async (req, res, next) => {
-  const queryStr = JSON.stringify(req.query).replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`)
-  const bootcamps = await Bootcamp.find(JSON.parse(queryStr));
-  
+  const reqQuery = req.query; 
+  const fieldsToRemove = ['select', 'sort', 'limit', 'page'];
+
+  const qs = JSON.stringify(omit(fieldsToRemove, reqQuery));
+  const formattedQs = qs.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`);
+  const selectFields = reqQuery.select ? reqQuery.select.split(',').join(' ') : '' 
+  const sortFields = reqQuery.sort ? reqQuery.sort.split(',').join(' ') : '-createdAt'
+
+  // pagination
+  const limit = reqQuery.limit ? parseInt(reqQuery.limit) : 20;
+  const page = reqQuery.page ? parseInt(reqQuery.page) : 1;
+  const skip = (page - 1) * limit;
+
+  const bootcamps = await Bootcamp
+                            .find(JSON.parse(formattedQs))
+                            .select(selectFields)
+                            .sort(sortFields)
+                            .skip(skip)
+                            .limit(limit);
+
+  // add count and pagination to results
+  const endIndex = page * limit;
+  const total = await Bootcamp.countDocuments();
+  const nextPage = endIndex < total && { page: page + 1, limit };
+  const prev = skip > 0 && { page: page - 1, limit };
+
+  const pagination = {
+    ...(nextPage && { next: nextPage }),
+    ...(prev && {prev})
+  }
+
+
   res.status(200);
-  res.json({success: true, msg: "show all bootcamps", data: bootcamps});
+  res.json({
+    success: true,
+    msg: "show all bootcamps",
+    data: bootcamps,
+    totalCount: total,
+    pagination
+  });
 });
 
 // @desc    Get single bootcamp

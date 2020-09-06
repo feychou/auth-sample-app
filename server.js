@@ -1,8 +1,10 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const morgan = require('morgan');
-const connectDB = require('./config/db');
 const colors = require('colors');
+
+const connectDB = require('./config/db');
+const errorHandler = require('./middleware/error');
 
 dotenv.config();
 
@@ -21,7 +23,7 @@ if (NODE_ENV === 'development') {
   app.use(morgan('dev'));  
 }
 app.use(`${ROOT}/bootcamps`, bootcamps);
-
+app.use(errorHandler);
 
 const server = app.listen(port, console.log(`Server running in ${NODE_ENV} mode on port ${port}`.cyan.bold));
 

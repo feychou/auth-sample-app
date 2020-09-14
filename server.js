@@ -10,7 +10,7 @@ dotenv.config();
 
 connectDB();
 const bootcamps = require('./routes/bootcamps');
-
+const courses = require('./routes/courses');
 
 const { PORT, NODE_ENV } = process.env;
 const port = PORT || 5000;
@@ -23,6 +23,7 @@ if (NODE_ENV === 'development') {
   app.use(morgan('dev'));  
 }
 app.use(`${ROOT}/bootcamps`, bootcamps);
+app.use(`${ROOT}/courses`, courses);
 app.use(errorHandler);
 
 const server = app.listen(port, console.log(`Server running in ${NODE_ENV} mode on port ${port}`.cyan.bold));
